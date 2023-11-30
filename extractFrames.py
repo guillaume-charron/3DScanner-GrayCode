@@ -1,6 +1,6 @@
 import cv2
 import os
-video_name = 'video-gray-code-on-screen-1seq'
+video_name = './data/recordings/record_1'
 vidcap = cv2.VideoCapture(f'{video_name}.mp4')
 success,image = vidcap.read()
 count = 0

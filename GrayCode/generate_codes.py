@@ -45,7 +45,7 @@ def display_gray_code(gray_codes, width, height, repeat_n, fps, write_video_seq=
             if i < height:
                 images[id_h, start_pos:end_pos, :] = 255 if bit == 1 else 0
                 images[id_inv_h, start_pos:end_pos, :] = 255-images[id_h, start_pos:end_pos, :]
-                
+
     if write_video_seq:
         out = cv2.VideoWriter('./data/gray_sequence.mp4',cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height), isColor=False)
     for n in range(repeat_n):
@@ -69,5 +69,5 @@ gray_codes = get_gray_codes(width, height)
 
 # Display gray codes
 repeat_n = 1
-fps = 1
+fps = 10
 display_gray_code(gray_codes, width, height, repeat_n, fps, write_video_seq=True)

@@ -21,6 +21,9 @@ cap = cv.VideoCapture(0)
 if not cap.isOpened():
     print("Cannot open camera")
     exit()
+cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+
 while True:
     # Capture frame-by-frame
     ret, frame = cap.read()
@@ -60,13 +63,13 @@ while True:
     if keyPressed == ord('q'):
         break
     if keyPressed == ord('s') and mtx is not None and dist is not None:
-        np.save('./mtx.npy', mtx)
-        np.save('./dist.npy', dist)
+        np.save('./data/mtx.npy', mtx)
+        np.save('./data/dist.npy', dist)
     if keyPressed == ord('l'):
-        if os.path.exists('./mtx.npy'):
-            mtx = np.load('./mtx.npy')
-        if os.path.exists('./dist.npy'):
-            dist = np.load('./dist.npy')
+        if os.path.exists('./data/mtx.npy'):
+            mtx = np.load('./data/mtx.npy')
+        if os.path.exists('./data/dist.npy'):
+            dist = np.load('./data/dist.npy')
     if keyPressed == ord('c') and ret == True:
         images = glob.glob(os.path.join(calibration_folder,'*.jpg'))
         n = 0
