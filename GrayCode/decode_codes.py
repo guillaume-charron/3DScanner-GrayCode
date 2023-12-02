@@ -51,22 +51,19 @@ def to_gray(images):
 def get_direct_indirect(images):
     black = images[0]
     white = images[1]
-    zero_white = np.where(white == 0)
-    white[zero_white] = 1
 
     pattern_len = (len(images) - 2) / 4
     horizontal_ids = np.array([2*pattern_len - 2, 2*pattern_len - 4, 2*pattern_len - 6, 4*pattern_len - 2, 4*pattern_len - 4, 4*pattern_len - 6], dtype=np.uint8)
     vertical_ids = np.array([1, 3, 5, 2*pattern_len + 1, 2*pattern_len + 3, 2*pattern_len + 5], dtype=np.uint8)
     
-    b = (white + black) / white
-
+    b_inv = white / (white + black)
+    
     remaining_images = images[2:]
     L_max = np.max(remaining_images[horizontal_ids], axis=0)
     L_min = np.min(remaining_images[vertical_ids], axis=0)
 
-    L_g = (L_min - L_max) / (b * (1 + b))
-    L_g[zero_white] = 0
-    L_d = L_max - (1 + b) * L_g / 2
+    L_d = (L_max - L_min) * b_inv
+    L_g = 2.0 * (L_max - L_d) * b_inv
 
     return L_d, L_g
 
@@ -104,16 +101,15 @@ def get_is_lit(images, L_d, L_g, eps=5, m=15):
     h_codes[np.where(((h_norm + eps) < L_d) & (h_inv > (L_g + eps)))] = 0
     v_codes[np.where(((v_norm + eps) < L_d) & (v_inv > (L_g + eps)))] = 0
 
-    h_codes[np.where((h_norm > (L_g + eps)) & ((h_inv + eps) > L_d))] = 1
-    v_codes[np.where((v_norm > (L_g + eps)) & ((v_inv + eps) > L_d))] = 1
-
-    (x, y) = 1000, 1000
+    h_codes[np.where((h_norm > (L_g + eps)) & ((h_inv + eps) < L_d))] = 1
+    v_codes[np.where((v_norm > (L_g + eps)) & ((v_inv + eps) < L_d))] = 1
     
-    h_pixels = np.array([gray_to_decimal(h_codes[:, y, x]) for x in range(0, h_codes.shape[2]) for y in range(0, h_codes.shape[1])]).reshape((h_codes.shape[1], h_codes.shape[2]))
-    v_pixels = np.array([gray_to_decimal(v_codes[:, y, x]) for x in range(0, v_codes.shape[2]) for y in range(0, v_codes.shape[1])]).reshape((v_codes.shape[1], v_codes.shape[2]))
+    h_pixels = np.array([gray_to_decimal(h_codes[:, y, x])  for y in range(0, h_codes.shape[1]) for x in range(0, h_codes.shape[2])]).reshape((h_codes.shape[1], h_codes.shape[2]))
+    v_pixels = np.array([gray_to_decimal(np.flip(v_codes[:, y, x]))  for y in range(0, v_codes.shape[1])for x in range(0, v_codes.shape[2])] ).reshape((v_codes.shape[1], v_codes.shape[2]))
 
-    np.save('./h_pixels.npy', h_pixels)
-    np.save('./v_pixels.npy', v_pixels)
+    # np.save('./h_pixels.npy', h_pixels)
+    # np.save('./v_pixels.npy', v_pixels)
+    return h_pixels, v_pixels
 
 # https://stackoverflow.com/a/72028021
 def gray_decode(n):
@@ -134,7 +130,7 @@ def gray_to_decimal(gray_code_list):
 
 def decode_images(images):
     L_d, L_g = get_direct_indirect(images)
-    get_is_lit(images, L_d, L_g)
+    return get_is_lit(images, L_d, L_g)
 
 if __name__ == '__main__':
     folder = './data/recordings/record_1'
