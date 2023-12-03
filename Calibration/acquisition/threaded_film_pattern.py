@@ -18,6 +18,7 @@ class Camera(object):
         self.WAIT_MS = int(self.SECONDS_PER_IMAGE * 1000)
         
         # Start frame retrieval thread
+        self.thread_active = True
         self.thread = Thread(target=self.update, args=())
         self.thread.daemon = True
         self.thread.start()
@@ -36,9 +37,8 @@ class Camera(object):
         self.out_height = height
         self.isNewFrame = False
 
-        
     def update(self):
-        while True:
+        while self.thread_active:
             if self.capture.isOpened():
                 (self.status, self.frame) = self.capture.read()
                 self.isNewFrame = True
@@ -84,6 +84,11 @@ class Camera(object):
             self.isRecording = False
             self.out.release()
             print('Stop recording, saved to:', self.file_name.format(self.video_id))
+    
+    def stop_cam(self):
+        self.thread_active = False
+        self.capture.release()
+        cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     cam = Camera()
