@@ -34,14 +34,22 @@ class Camera(object):
             self.dist = np.load('./data/dist.npy')
         self.out_width  = width
         self.out_height = height
+        self.isNewFrame = False
 
         
     def update(self):
         while True:
             if self.capture.isOpened():
                 (self.status, self.frame) = self.capture.read()
+                self.isNewFrame = True
             time.sleep(self.SECONDS_PER_IMAGE)
-            
+    
+    def get_frame(self):
+        if self.isNewFrame:
+            self.isNewFrame = False
+            return self.frame
+        return None
+
     def show_frame(self):
         im = self.remove_dist()
         if self.isRecording:
