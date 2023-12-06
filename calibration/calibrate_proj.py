@@ -163,7 +163,7 @@ proj_obj_pts = []
 proj_circle_pts = []
 
 if __name__ == '__main__':
-    cam = Camera(1)
+    cam = Camera(0)
     consecutive_frames = 0
     while True:
         frame = cam.get_frame()
