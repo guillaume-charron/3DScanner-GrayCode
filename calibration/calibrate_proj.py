@@ -16,7 +16,7 @@ def detect_markers(frame, gray, k, dist, dictionary, params, draw=True):
     rvec = None
     tvec = None
     ret = False
-    homography = None
+    H = None
 
     # Detect markers and corners
     corners, ids, rejected = cv2.aruco.detectMarkers(gray, dictionary, parameters=params)
@@ -49,7 +49,7 @@ def detect_circle_grid(frame, gray, k, dist, shape, rvec, tvec, H, draw=True):
         circles3D = cv2.perspectiveTransform(circles, H)
         circles3D = np.pad(circles3D, ((0,0), (0,0), (0,1)), 'constant', constant_values=0)
         
-    return ret, frame, circles, circles3D.astype(np.float32)
+    return ret, frame, circles, circles3D.astype(np.float32) if circles3D is not None else None
 
 def build_circle_grid_pts(nb_col, nb_row, circle_r):
     circle_2d_pts = np.zeros((nb_col*nb_row, 2), dtype=np.int32)
@@ -108,6 +108,7 @@ circle_2d_pts_board = build_circle_grid_pts(nb_col, nb_row, circle_r_board)
 
 proj_obj_pts = []
 proj_circle_pts = []
+cam_circle_pts = []
 
 if __name__ == '__main__':
     cam = Camera(0)
@@ -130,21 +131,20 @@ if __name__ == '__main__':
                 # Find projected circles
                 ret, frame, circles_2d_cam, circles_3d = detect_circle_grid(frame, gray, cam_mtx, cam_dist, (nb_col, nb_row), rvec, tvec, H)
             
-            if proj_mtx is None:
-                if ret:
-                    consecutive_frames += 1
-                else:
-                    consecutive_frames = 0
-                
-                if consecutive_frames > 10:
-                    n = 0
-                    while os.path.exists(os.path.join(calibration_folder,f'calibrate_{n}.jpg')):
-                        n += 1
-                    cv2.imwrite(os.path.join(calibration_folder,f'calibrate_{n}.jpg'), og_frame)
-                    proj_obj_pts.append(circles_3d)
-                    proj_circle_pts.append(circle_2d)
-                    print('Saved calibration image')
-                    consecutive_frames = 0                    
+            if ret:
+                consecutive_frames += 1
+            else:
+                consecutive_frames = 0
+            
+            if consecutive_frames > 10:
+                n = 0
+                while os.path.exists(os.path.join(calibration_folder,f'calibrate_{n}.jpg')):
+                    n += 1
+                cv2.imwrite(os.path.join(calibration_folder,f'calibrate_{n}.jpg'), og_frame)
+                proj_obj_pts.append(circles_3d)
+                proj_circle_pts.append(circle_2d)
+                print('Saved calibration image')
+                consecutive_frames = 0                    
 
             
             proj_img = img_circle.copy()
@@ -178,6 +178,7 @@ if __name__ == '__main__':
         if keyPressed == ord('k'):
             proj_obj_pts.clear()
             proj_circle_pts.clear()
+            cam_circle_pts.clear()
             # Calibrate projector
             images = glob.glob(os.path.join(calibration_folder,'*.jpg'))
             for fname in images:
@@ -186,17 +187,45 @@ if __name__ == '__main__':
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
                 # Detect markers and corners
-                ret, img, rvec, tvec = detect_markers(img, gray, cam_mtx, cam_dist, dictionary, params, draw=False)
+                ret, img, rvec, tvec, H = detect_markers(img, gray, cam_mtx, cam_dist, dictionary, params, draw=False)
 
                 if ret:
                     # Find projected circles
-                    ret, img, circles_2d_cam, circles_3d = detect_circle_grid(img, gray, cam_mtx, cam_dist, (nb_col, nb_row), rvec, tvec, draw=False)
-                    proj_obj_pts.append(circles_3d)
-                    proj_circle_pts.append(circle_2d.astype(np.float32))
+                    ret, img, circles_2d_cam, circles_3d = detect_circle_grid(img, gray, cam_mtx, cam_dist, (nb_col, nb_row), rvec, tvec, H, draw=False)
+                    if ret:
+                        proj_obj_pts.append(circles_3d)
+                        proj_circle_pts.append(circle_2d.astype(np.float32))
+                        cam_circle_pts.append(circles_2d_cam)
+                    else:
+                        print('Bad image:', fname)
 
+            print('\nProjector calibration')
             ret, proj_mtx, proj_dist, rvecs, tvecs = cv2.calibrateCamera(proj_obj_pts, proj_circle_pts, (1920,1080), None, None)
             print(proj_mtx)
             print(proj_dist)
+
+
+            print('\nStereo calibration')
+            ret, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_FIX_INTRINSIC)
+            print('Camera parameters')
+            print(cam_mtx, cam_dist)
+            print('Projector parameters')
+            print(proj_mtx, proj_dist)
+            print('Rotation and translation')
+            print(proj_R)
+            print(proj_T)
+
+            R1, R2, P1, P2, Q, _, _ = cv2.stereoRectify(cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), proj_R, proj_T)
+        
             np.save('./data/proj_mtx.npy', proj_mtx)
             np.save('./data/proj_dist.npy', proj_dist)
+            np.save('./data/mtx.npy', cam_mtx)
+            np.save('./data/dist.npy', cam_dist)
+            np.save('./data/R.npy', proj_R)
+            np.save('./data/T.npy', proj_T)
+            np.save('./data/R1.npy', R1)
+            np.save('./data/R2.npy', R2)
+            np.save('./data/P1.npy', P1)
+            np.save('./data/P2.npy', P2)
+
 

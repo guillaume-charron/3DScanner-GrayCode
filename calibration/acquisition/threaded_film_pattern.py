@@ -51,10 +51,10 @@ class Camera(object):
         return None
 
     def show_frame(self):
-        im = self.remove_dist()
+        #im = self.remove_dist()
         if self.isRecording:
-            self.out.write(im)
-        cv2.imshow('frame', im)
+            self.out.write(self.frame)
+        cv2.imshow('frame', self.frame)
         #cv2.waitKey(self.WAIT_MS)
 
     def remove_dist(self):
@@ -100,6 +100,7 @@ if __name__ == '__main__':
 
         keyPressed = cv2.waitKey(1)
         if keyPressed == ord('q'):
+            cam.stop_cam()
             break
         if keyPressed == ord('r'):
             cam.start_recording()

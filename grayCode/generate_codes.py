@@ -51,6 +51,8 @@ def display_gray_code(gray_codes, width, height, repeat_n, fps, write_video_seq=
     for n in range(repeat_n):
         for i in range(len(images)):
             # Display the image
+            cv2.namedWindow('Gray Code Pattern', cv2.WINDOW_NORMAL)
+            cv2.setWindowProperty('Gray Code Pattern', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
             cv2.imshow("Gray Code Pattern", images[i])
             cv2.waitKey(int(1000/fps))
 
@@ -69,5 +71,5 @@ gray_codes = get_gray_codes(width, height)
 
 # Display gray codes
 repeat_n = 1
-fps = 10
+fps = 5
 display_gray_code(gray_codes, width, height, repeat_n, fps, write_video_seq=True)
