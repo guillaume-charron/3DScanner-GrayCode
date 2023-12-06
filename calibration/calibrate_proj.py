@@ -5,59 +5,6 @@ import numpy as np
 
 from acquisition.threaded_film_pattern import Camera
 
-
-def fromCamToWorld(cameraMatrix, distCoeff, rV, tV, imgPoints):
-    s = len(imgPoints)
-    invK = np.linalg.inv(cameraMatrix)
-    #imgPoints = cv2.convertPointsToHomogeneous(cv2.undistortPoints(imgPoints, cameraMatrix, distCoeff))
-
-    r = rV.astype(np.float32)
-    t = tV.astype(np.float32)
-    rMat, _ = cv2.Rodrigues(r)
-    transPlaneToCam = np.linalg.inv(rMat) @ t
-    world_points = []
-    for i in range(s):
-        wpTemp = []
-        s2 = len(imgPoints[i])
-        for j in range(s2):
-            coords = np.array([[imgPoints[i][j][0]], [imgPoints[i][j][1]], [1.0]], dtype=np.float32)
-            
-            worldPtCam = invK @ coords
-            worldPtPlane = np.linalg.inv(rMat) @ worldPtCam
-
-            scale = (transPlaneToCam[2] / worldPtPlane[2])[0]
-            worldPtPlaneReproject = scale * worldPtPlane - transPlaneToCam
-            
-
-            pt = np.array([worldPtPlaneReproject[0][0], worldPtPlaneReproject[1][0], 0], dtype=np.float32)
-            wpTemp.append(pt)
-        world_points.append(wpTemp)
-
-    return np.array(world_points, dtype=np.float32)
-
-# Took from https://www.morethantechnical.com/blog/2017/11/17/projector-camera-calibration-the-easy-way/
-def intersectCirclesRaysToBoard(circles, rvec, t, K, dist_coef):
-    circles_normalized = cv2.convertPointsToHomogeneous(cv2.undistortPoints(circles, K, dist_coef))
-    if not rvec.size:
-        return None
-    R, _ = cv2.Rodrigues(rvec)
-    # https://stackoverflow.com/questions/5666222/3d-line-plane-intersection
-    plane_normal = R[2,:] # last row of plane rotation matrix is normal to plane
-    plane_point = t.T     # t is a point on the plane
-    epsilon = 1e-06
-    circles_3d = np.zeros((0,3), dtype=np.float32)
-    for p in circles_normalized:
-        ray_direction = p / np.linalg.norm(p)
-        ray_point = p
-        ndotu = plane_normal.dot(ray_direction.T)
-        if abs(ndotu) < epsilon:
-            print ("no intersection or line is within plane")
-        w = ray_point - plane_point
-        si = -plane_normal.dot(w.T) / ndotu
-        Psi = w + si * ray_direction + plane_point
-        circles_3d = np.append(circles_3d, Psi, axis = 0)
-    return circles_3d
-
 def remove_dist(img, k, dist):
     h,  w = img.shape[:2]
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(k, dist, (w,h), 1, (w,h))
@@ -69,6 +16,7 @@ def detect_markers(frame, gray, k, dist, dictionary, params, draw=True):
     rvec = None
     tvec = None
     ret = False
+    homography = None
 
     # Detect markers and corners
     corners, ids, rejected = cv2.aruco.detectMarkers(gray, dictionary, parameters=params)
@@ -76,42 +24,47 @@ def detect_markers(frame, gray, k, dist, dictionary, params, draw=True):
     if corners is not None and len(corners) > 0:
         if draw:
             frame = cv2.aruco.drawDetectedMarkers(frame, corners, ids)
-        ret, charuco_corners, charuco_ids = cv2.aruco.interpolateCornersCharuco(corners, ids, frame, charuco_board)
+        ret, charuco_corners, charuco_ids = cv2.aruco.interpolateCornersCharuco(corners, ids, gray, charuco_board)
         if charuco_ids is not None and len(charuco_ids) > 0:
             if draw:
                 frame = cv2.aruco.drawDetectedCornersCharuco(frame, charuco_corners, charuco_ids)
             ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(charuco_corners, charuco_ids, charuco_board, k, dist, None, None)
+            #cv2.findHomography(charuco_board.getObjPoints(), charuco_corners, cv2.RANSAC, 5.0)
             if ret and draw:
                 frame = cv2.drawFrameAxes(frame, k, dist, rvec, tvec, 0.1)
+            obj_points = np.reshape(np.array(charuco_board.getObjPoints())[ids][:,:,:, :2], (len(corners)*4, 2))
+            corners_flatten = np.reshape(np.array(corners), (len(corners)*4, 2))
+            H, _ = cv2.findHomography(corners_flatten, obj_points, cv2.RANSAC, 5.0)
 
-    return ret, frame, rvec, tvec
+    return ret, frame, rvec, tvec, H
 
-def detect_circle_grid(frame, gray, k, dist, shape, rvec, tvec, draw=True):
+def detect_circle_grid(frame, gray, k, dist, shape, rvec, tvec, H, draw=True):
     ret, circles = cv2.findCirclesGrid(gray, shape, flags=cv2.CALIB_CB_ASYMMETRIC_GRID + cv2.CALIB_CB_CLUSTERING)
-    circles3D_reprojected_on_board = None
-    world_pts = None
+    
     circles3D = None
     if ret:
         if draw:
             frame = cv2.drawChessboardCorners(frame, shape, circles, ret)
-        # ray-plane intersection: circle-center to chessboard-plane
-        circles3D = intersectCirclesRaysToBoard(circles, rvec, tvec, k, dist)
-        for i in range(len(circles3D)):
-            circles3D[i] = circles3D[i] / circles3D[i][2]
-            circles3D[i][2] = 0
+        
+        circles3D = cv2.perspectiveTransform(circles, H)
+        circles3D = np.pad(circles3D, ((0,0), (0,0), (0,1)), 'constant', constant_values=0)
+        
+    return ret, frame, circles, circles3D.astype(np.float32)
 
-        world_pts = fromCamToWorld(k, dist, rvec, tvec, circles)
+def build_circle_grid_pts(nb_col, nb_row, circle_r):
+    circle_2d_pts = np.zeros((nb_col*nb_row, 2), dtype=np.int32)
+    count = 0
+    for i in range(nb_row):
+        for j in range(nb_col-1, -1, -1):
+            if i % 2 == 0:
+                pos_x = j * 6 * circle_r + (3 * circle_r)
+            else:
+                pos_x = j * 6 * circle_r 
+            pos_y = i * 3 * circle_r
+            circle_2d_pts[count] = [pos_x, pos_y]
+            count += 1
+    return circle_2d_pts
 
-        # re-project on camera for verification
-        circles3D_reprojected, _ = cv2.projectPoints(circles3D, (0,0,0), (0,0,0), k, dist)
-
-        # # Project on board
-        # circles3D_reprojected_on_board, _ = cv2.projectPoints(circles3D, rvec, tvec, k, dist)
-        # circles3D_reprojected_on_board = np.pad(circles3D_reprojected_on_board, ((0,0), (0,0), (0, 1)))
-        if draw:
-            for c in circles3D_reprojected:
-                frame = cv2.circle(frame, tuple(c.astype(np.int32)[0]), 5, (255,255,0), cv2.FILLED)
-    return ret, frame, circles, circles3D.astype(np.float32) if circles3D is not None else None
 
 
 # Define the charuco board parameters
@@ -146,18 +99,12 @@ nb_col = 4
 nb_row = 11
 circle_r = 20
 default_x, default_y = (800, 400)
+circle_r_board = 0.007
+default_x_board, default_y_board = (-0.18, 0.04)
 
-circle_2d_pts = np.zeros((nb_col*nb_row, 2), dtype=np.int32)
-count = 0
-for i in range(nb_row):
-    for j in range(nb_col-1, -1, -1):
-        if i % 2 == 0:
-            pos_x = j * 6 * circle_r + (3 * circle_r)
-        else:
-            pos_x = j * 6 * circle_r 
-        pos_y = i * 3 * circle_r
-        circle_2d_pts[count] = [pos_x, pos_y]
-        count += 1
+circle_2d_pts = build_circle_grid_pts(nb_col, nb_row, circle_r)
+circle_2d_pts_board = build_circle_grid_pts(nb_col, nb_row, circle_r_board)
+  
 
 proj_obj_pts = []
 proj_circle_pts = []
@@ -177,26 +124,28 @@ if __name__ == '__main__':
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
             # Detect markers and corners
-            ret, frame, rvec, tvec = detect_markers(frame, gray, cam_mtx, cam_dist, dictionary, params)
+            ret, frame, rvec, tvec, H = detect_markers(frame, gray, cam_mtx, cam_dist, dictionary, params)
 
             if ret:
                 # Find projected circles
-                ret, frame, circles_2d_cam, circles_3d = detect_circle_grid(frame, gray, cam_mtx, cam_dist, (nb_col, nb_row), rvec, tvec)
+                ret, frame, circles_2d_cam, circles_3d = detect_circle_grid(frame, gray, cam_mtx, cam_dist, (nb_col, nb_row), rvec, tvec, H)
             
-            if ret:
-                consecutive_frames += 1
-            else:
-                consecutive_frames = 0
-            
-            if consecutive_frames > 10:
-                n = 0
-                while os.path.exists(os.path.join(calibration_folder,f'calibrate_{n}.jpg')):
-                    n += 1
-                cv2.imwrite(os.path.join(calibration_folder,f'calibrate_{n}.jpg'), og_frame)
-                proj_obj_pts.append(circles_3d)
-                proj_circle_pts.append(circle_2d)
-                print('Saved calibration image')
-                consecutive_frames = 0
+            if proj_mtx is None:
+                if ret:
+                    consecutive_frames += 1
+                else:
+                    consecutive_frames = 0
+                
+                if consecutive_frames > 10:
+                    n = 0
+                    while os.path.exists(os.path.join(calibration_folder,f'calibrate_{n}.jpg')):
+                        n += 1
+                    cv2.imwrite(os.path.join(calibration_folder,f'calibrate_{n}.jpg'), og_frame)
+                    proj_obj_pts.append(circles_3d)
+                    proj_circle_pts.append(circle_2d)
+                    print('Saved calibration image')
+                    consecutive_frames = 0                    
+
             
             proj_img = img_circle.copy()
             # if proj_mtx is not None and proj_dist is not None and rvec is not None and tvec is not None:
