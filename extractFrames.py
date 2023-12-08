@@ -1,6 +1,6 @@
 import cv2
 import os
-video_name = './data/recordings/record_9'
+video_name = './data/recordings/newsetup_1'
 vidcap = cv2.VideoCapture(f'{video_name}.mp4')
 success,image = vidcap.read()
 count = 0

@@ -66,10 +66,10 @@ def display_gray_code(gray_codes, width, height, repeat_n, fps, write_video_seq=
 
 
 # Get gray codes
-width, height = (1920, 1080)
+width, height = (800, 600)
 gray_codes = get_gray_codes(width, height)
 
 # Display gray codes
-repeat_n = 1
+repeat_n = 5
 fps = 5
 display_gray_code(gray_codes, width, height, repeat_n, fps, write_video_seq=True)

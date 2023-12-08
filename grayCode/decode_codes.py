@@ -107,8 +107,6 @@ def get_is_lit(images, L_d, L_g, eps=5, m=15):
     h_pixels = np.array([gray_to_decimal(h_codes[:, y, x])  for y in range(0, h_codes.shape[1]) for x in range(0, h_codes.shape[2])]).reshape((h_codes.shape[1], h_codes.shape[2]))
     v_pixels = np.array([gray_to_decimal(np.flip(v_codes[:, y, x]))  for y in range(0, v_codes.shape[1])for x in range(0, v_codes.shape[2])] ).reshape((v_codes.shape[1], v_codes.shape[2]))
 
-    # np.save('./h_pixels.npy', h_pixels)
-    # np.save('./v_pixels.npy', v_pixels)
     return h_pixels, v_pixels
 
 # https://stackoverflow.com/a/72028021
@@ -123,7 +121,11 @@ def gray_to_decimal(gray_code_list):
     gray_code_list = [str(gray_code_list[i]) for i in range(0, len(gray_code_list))]
     gray_code_str = ''.join(gray_code_list)
     if '-1' in gray_code_str:
-        return -1
+        count = gray_code_str.count('-1')
+        if count < 3:
+            gray_code_str = gray_code_str.replace('-1', '0')
+        else:
+            return -1
     
     gray_code_binary = int(gray_code_str, 2)
     return gray_decode(gray_code_binary)
@@ -133,8 +135,8 @@ def decode_images(images):
     return get_is_lit(images, L_d, L_g)
 
 if __name__ == '__main__':
-    folder = './data/recordings/record_1'
-    filtered_folder = './data/recordings/record_1_filtered'
+    folder = './data/recordings/newsetup_1'
+    filtered_folder = './data/recordings/newsetup_1_filtered'
     images = None
     if not os.path.exists(filtered_folder):
         os.mkdir(filtered_folder)
@@ -155,4 +157,7 @@ if __name__ == '__main__':
 
     print('Decoding codes')
     gray_images = to_gray(images)
-    decode_images(gray_images)
+    h_pixel, v_pixel = decode_images(gray_images)
+    print('Save decoded codes')
+    np.save('./data/h_pixel.npy', h_pixel)
+    np.save('./data/v_pixel.npy', v_pixel)

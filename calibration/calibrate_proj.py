@@ -98,7 +98,7 @@ if not os.path.exists(calibration_folder):
 nb_col = 4
 nb_row = 11
 circle_r = 20
-default_x, default_y = (800, 400)
+default_x, default_y = (800, 100)
 circle_r_board = 0.007
 default_x_board, default_y_board = (-0.18, 0.04)
 
