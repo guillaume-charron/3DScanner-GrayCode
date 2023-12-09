@@ -12,8 +12,12 @@ if __name__ == '__main__':
     image_seq = get_image_sequence(gray_codes, width, height)
     seq_id = 0
 
+    # Start a full screen window for gray codes
     cv2.namedWindow('Gray Code Pattern', cv2.WINDOW_NORMAL)
     cv2.setWindowProperty('Gray Code Pattern', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+    # Get output data path
+    output_path = ''
 
     while True:
         cv2.imshow("Gray Code Pattern", image_seq[seq_id])
