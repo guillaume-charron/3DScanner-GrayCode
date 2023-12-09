@@ -1,0 +1,6 @@
+README.md
+setup.py
+scanner.egg-info/PKG-INFO
+scanner.egg-info/SOURCES.txt
+scanner.egg-info/dependency_links.txt
+scanner.egg-info/top_level.txt
