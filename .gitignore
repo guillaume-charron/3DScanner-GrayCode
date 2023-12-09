@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 *.jpg
 *.mp4
+/data/Recordings

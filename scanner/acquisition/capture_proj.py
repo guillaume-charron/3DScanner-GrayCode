@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from scanner.acquisition import Camera
 from scanner.grayCode.generate_codes import get_gray_codes, get_image_sequence
-from scanner.grayCode.decode_codes import decode_images
+from scanner.grayCode.decode_codes import get_codes, gray_to_decimal
 
 if __name__ == '__main__':
     cam = Camera()
@@ -35,8 +35,12 @@ if __name__ == '__main__':
     image_id = 0
     is_ready = True
     start_time = -1.0
+    cache_h_codes = []
+    cache_v_codes = []
+    MAX_NB_RUNS = 2
+    run_id = 0
 
-    while True:
+    while run_id < MAX_NB_RUNS:
 
         if is_ready:
             is_ready = False
@@ -48,7 +52,7 @@ if __name__ == '__main__':
         if frame is not None and time.time() - start_time > (wait_time if image_id > 0 else 3*wait_time):
             frame_resized = cv2.resize(frame, (960, 540))
             cv2.imshow('Camera', frame_resized)
-            cv2.imwrite(os.path.join(output_path, 'frame_{}.png'.format(image_id)), frame)
+            cv2.imwrite(os.path.join(output_path, 'frame_{}.jpg'.format(image_id)), frame)
             image_id += 1
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -58,14 +62,15 @@ if __name__ == '__main__':
             gray_images[seq_id] = gray
 
             if seq_id == seq_len - 1: # Completed a sequence, analyze gray codes
+
                 # Decode gray codes
-                h_pixel, v_pixel = decode_images(gray_images)
+                h_codes, v_codes = get_codes(gray_images)
 
-                # TODO : Save data
+                # Save data to cache
+                cache_h_codes.append(h_codes)
+                cache_v_codes.append(v_codes)
 
-                # TODO : Average with previous
-
-                # TODO : Compute 3D points?
+                run_id += 1
             
             seq_id = (seq_id + 1) % len(image_seq)
             is_ready = True
@@ -73,4 +78,19 @@ if __name__ == '__main__':
         keyPressed = cv2.waitKey(1)
         if keyPressed == ord('q'):
             cam.stop_cam()
-            break
+            exit(0)
+
+    # Stop camera
+    cam.stop_cam()
+
+    # Get maximum with previous (eliminate undefined pixels)
+    best_h_codes = np.max(cache_h_codes, axis=0)
+    best_v_codes = np.max(cache_v_codes, axis=0)
+
+    # Decode gray codes
+    h_pixels = np.array([gray_to_decimal(best_h_codes[:, y, x])  for y in range(0, best_h_codes.shape[1]) for x in range(0, best_h_codes.shape[2])]).reshape((best_h_codes.shape[1], best_h_codes.shape[2]))
+    v_pixels = np.array([gray_to_decimal(np.flip(best_v_codes[:, y, x]))  for y in range(0, best_v_codes.shape[1])for x in range(0, best_v_codes.shape[2])] ).reshape((best_v_codes.shape[1], best_v_codes.shape[2]))
+
+    # Save data to files
+    np.save(os.path.join(output_path, 'h_pixels.npy'), h_pixels)
+    np.save(os.path.join(output_path, 'v_pixels.npy'), v_pixels)
