@@ -1,1 +1,1 @@
-from .threaded_film_pattern import Camera
+from .camera import Camera

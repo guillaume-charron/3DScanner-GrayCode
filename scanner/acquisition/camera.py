@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 class Camera(object):
-    def __init__(self, src=0, width=1920, height=1080, fps=30, out_file_name='./data/recordings/record_{}.mp4'):
+    def __init__(self, src=0, width=1920, height=1080, fps=30):
         self.capture = cv2.VideoCapture(src, cv2.CAP_DSHOW)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
@@ -23,18 +23,14 @@ class Camera(object):
         self.thread.daemon = True
         self.thread.start()
 
-        self.out = None
-        self.video_id = 0
-        self.isRecording = False
-        self.file_name = out_file_name
+        # Get Intrinsics parameters
         self.mtx = None
         self.dist = None
         if os.path.exists('./data/mtx.npy'):
             self.mtx = np.load('./data/mtx.npy')
         if os.path.exists('./data/dist.npy'):
             self.dist = np.load('./data/dist.npy')
-        self.out_width  = width
-        self.out_height = height
+
         self.isNewFrame = False
 
     def update(self):
@@ -52,8 +48,6 @@ class Camera(object):
 
     def show_frame(self):
         #im = self.remove_dist()
-        if self.isRecording:
-            self.out.write(self.frame)
         cv2.imshow('frame', self.frame)
         #cv2.waitKey(self.WAIT_MS)
 
@@ -69,43 +63,7 @@ class Camera(object):
             self.out_height = dst.shape[0]
         return dst
     
-    def start_recording(self):
-        if not self.isRecording:
-            self.isRecording = True
-            self.video_id = 0
-            while os.path.exists(self.file_name.format(self.video_id)):
-                self.video_id += 1
-            save_to = self.file_name.format(self.video_id)
-            print('Start recording, save to:',save_to)
-            self.out = cv2.VideoWriter(save_to,cv2.VideoWriter_fourcc(*'mp4v'), float(self.fps), (self.out_width, self.out_height),True)
-
-    def stop_recording(self):
-        if self.isRecording:
-            self.isRecording = False
-            self.out.release()
-            print('Stop recording, saved to:', self.file_name.format(self.video_id))
-    
     def stop_cam(self):
         self.thread_active = False
         self.capture.release()
         cv2.destroyAllWindows()
-
-if __name__ == '__main__':
-    cam = Camera()
-    while True:
-        try:
-            cam.show_frame()
-        except AttributeError:
-            pass
-
-        keyPressed = cv2.waitKey(1)
-        if keyPressed == ord('q'):
-            cam.stop_cam()
-            break
-        if keyPressed == ord('r'):
-            cam.start_recording()
-        if keyPressed == ord('s'):
-            cam.stop_recording()
-
-
-
