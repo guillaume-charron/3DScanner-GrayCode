@@ -29,11 +29,12 @@ def detect_markers(frame, gray, k, dist, dictionary, params, draw=True):
             if draw:
                 frame = cv2.aruco.drawDetectedCornersCharuco(frame, charuco_corners, charuco_ids)
             ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(charuco_corners, charuco_ids, charuco_board, k, dist, None, None)
-            #cv2.findHomography(charuco_board.getObjPoints(), charuco_corners, cv2.RANSAC, 5.0)
+
             if ret and draw:
                 frame = cv2.drawFrameAxes(frame, k, dist, rvec, tvec, 0.1)
+
             obj_points = np.reshape(np.array(charuco_board.getObjPoints())[ids][:,:,:, :2], (len(corners)*4, 2))
-            corners_flatten = np.reshape(np.array(corners), (len(corners)*4, 2))
+            corners_flatten = np.reshape(corners, (len(corners)*4, 2))
             H, _ = cv2.findHomography(corners_flatten, obj_points, cv2.RANSAC, 5.0)
 
     return ret, frame, rvec, tvec, H
@@ -231,6 +232,7 @@ if __name__ == '__main__':
             np.save('./data/calib_results/proj_circle_pts.npy', proj_circle_pts)
             np.save('./data/calib_results/cam_circle_pts.npy', cam_circle_pts)
 
+            # Save calibration results
             np.save('./data/proj_mtx.npy', proj_mtx)
             np.save('./data/proj_dist.npy', proj_dist)
             np.save('./data/mtx.npy', cam_mtx)
