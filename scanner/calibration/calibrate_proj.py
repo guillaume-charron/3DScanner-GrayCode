@@ -54,7 +54,7 @@ def detect_circle_grid(frame, gray, k, dist, shape, rvec, tvec, H, draw=True):
 def build_circle_grid_pts(nb_col, nb_row, circle_r):
     circle_2d_pts = np.zeros((nb_col*nb_row, 2), dtype=np.int32)
     count = 0
-    for i in range(nb_row):
+    for i in range(nb_row-1, -1, -1):
         for j in range(nb_col-1, -1, -1):
             if i % 2 == 0:
                 pos_x = j * 6 * circle_r + (3 * circle_r)
@@ -75,8 +75,8 @@ params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_NONE
 #cv2.imwrite('charuco.jpg', charuco_board.generateImage((1000, 1000), 5, 1))
 
 # Get previous calibration data for the camera
-cam_mtx = np.load('data/calib_results/mtx.npy')
-cam_dist = np.load('data/calib_results/dist.npy')
+cam_mtx = np.load('data/mtx.npy')
+cam_dist = np.load('data/dist.npy')
 
 # Get previous calibration data for the camera
 proj_mtx = None
@@ -98,7 +98,7 @@ if not os.path.exists(calibration_folder):
 nb_col = 4
 nb_row = 11
 circle_r = 20
-default_x, default_y = (800, 100)
+default_x, default_y = (800, 350)
 circle_r_board = 0.007
 default_x_board, default_y_board = (-0.18, 0.04)
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
             else:
                 consecutive_frames = 0
             
-            if consecutive_frames > 10:
+            if consecutive_frames > 5:
                 n = 0
                 while os.path.exists(os.path.join(calibration_folder,f'calibrate_{n}.jpg')):
                     n += 1
@@ -160,7 +160,8 @@ if __name__ == '__main__':
             proj_img[min_y:max_y, min_x:max_x] = cv2.bitwise_not(proj_img[min_y:max_y, min_x:max_x]) 
             for c in circle_2d:
                 proj_img = cv2.circle(proj_img, tuple(c.astype(np.int32)), circle_r, (0,0,0), cv2.FILLED)
-            cv2.imshow('frame', frame)
+            resized_frame = cv2.resize(frame, (960, 540))
+            cv2.imshow('frame', resized_frame)
             cv2.imshow('circle', proj_img)
         
         keyPressed = cv2.waitKey(1)
@@ -194,19 +195,26 @@ if __name__ == '__main__':
                     ret, img, circles_2d_cam, circles_3d = detect_circle_grid(img, gray, cam_mtx, cam_dist, (nb_col, nb_row), rvec, tvec, H, draw=False)
                     if ret:
                         proj_obj_pts.append(circles_3d)
-                        proj_circle_pts.append(circle_2d.astype(np.float32))
+                        proj_circle_pts.append(np.expand_dims(circle_2d.astype(np.float32), axis=1))
                         cam_circle_pts.append(circles_2d_cam)
                     else:
                         print('Bad image:', fname)
+
+            print('Camera calibration')
+            ret, cam_mtx, cam_dist, rvecs, tvecs = cv2.calibrateCamera(proj_obj_pts, cam_circle_pts, (1920,1080), None, None)
+            print(cam_mtx)
+            print(cam_dist)
+            print('Error', ret)
 
             print('\nProjector calibration')
             ret, proj_mtx, proj_dist, rvecs, tvecs = cv2.calibrateCamera(proj_obj_pts, proj_circle_pts, (1920,1080), None, None)
             print(proj_mtx)
             print(proj_dist)
-
+            print('Error', ret)
 
             print('\nStereo calibration')
-            ret, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_FIX_INTRINSIC)
+            error, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_FIX_INTRINSIC) #, flags=cv2.CALIB_USE_INTRINSIC_GUESS)#
+            #error, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_USE_INTRINSIC_GUESS) #, flags=cv2.)#
             print('Camera parameters')
             print(cam_mtx, cam_dist)
             print('Projector parameters')
@@ -214,9 +222,15 @@ if __name__ == '__main__':
             print('Rotation and translation')
             print(proj_R)
             print(proj_T)
+            print('Error', error)
 
             R1, R2, P1, P2, Q, _, _ = cv2.stereoRectify(cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), proj_R, proj_T)
-        
+
+            # Save points
+            np.save('./data/calib_results/proj_obj_pts.npy', proj_obj_pts)
+            np.save('./data/calib_results/proj_circle_pts.npy', proj_circle_pts)
+            np.save('./data/calib_results/cam_circle_pts.npy', cam_circle_pts)
+
             np.save('./data/proj_mtx.npy', proj_mtx)
             np.save('./data/proj_dist.npy', proj_dist)
             np.save('./data/mtx.npy', cam_mtx)

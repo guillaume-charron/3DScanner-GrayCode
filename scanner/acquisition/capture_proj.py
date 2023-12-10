@@ -7,7 +7,7 @@ from scanner.grayCode.generate_codes import get_gray_codes, get_image_sequence
 from scanner.grayCode.decode_codes import get_codes, gray_to_decimal
 
 if __name__ == '__main__':
-    cam = Camera()
+    cam = Camera(0, width=1920, height=1080, fps=30)
 
     # Parameters
     wait_time = 0.2 # in seconds
