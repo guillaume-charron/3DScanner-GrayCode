@@ -41,15 +41,15 @@ def detect_markers(frame, gray, k, dist, dictionary, params, draw=True):
 
 def detect_circle_grid(frame, gray, k, dist, shape, rvec, tvec, H, draw=True):
     ret, circles = cv2.findCirclesGrid(gray, shape, flags=cv2.CALIB_CB_ASYMMETRIC_GRID + cv2.CALIB_CB_CLUSTERING)
-    
+
     circles3D = None
     if ret:
         if draw:
             frame = cv2.drawChessboardCorners(frame, shape, circles, ret)
-        
+
         circles3D = cv2.perspectiveTransform(circles, H)
         circles3D = np.pad(circles3D, ((0,0), (0,0), (0,1)), 'constant', constant_values=0)
-        
+
     return ret, frame, circles, circles3D.astype(np.float32) if circles3D is not None else None
 
 def build_circle_grid_pts(nb_col, nb_row, circle_r):
@@ -60,7 +60,7 @@ def build_circle_grid_pts(nb_col, nb_row, circle_r):
             if i % 2 == 0:
                 pos_x = j * 6 * circle_r + (3 * circle_r)
             else:
-                pos_x = j * 6 * circle_r 
+                pos_x = j * 6 * circle_r
             pos_y = i * 3 * circle_r
             circle_2d_pts[count] = [pos_x, pos_y]
             count += 1
@@ -76,8 +76,8 @@ params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_NONE
 #cv2.imwrite('charuco.jpg', charuco_board.generateImage((1000, 1000), 5, 1))
 
 # Get previous calibration data for the camera
-cam_mtx = np.load('data/mtx.npy')
-cam_dist = np.load('data/dist.npy')
+cam_mtx = np.load('data/calib_results/mtx.npy')
+cam_dist = np.load('data/calib_results/dist.npy')
 
 # Get previous calibration data for the camera
 proj_mtx = None
@@ -98,14 +98,14 @@ if not os.path.exists(calibration_folder):
 # Define circle grid points in 2D
 nb_col = 4
 nb_row = 11
-circle_r = 20
+circle_r = 15
 default_x, default_y = (800, 350)
 circle_r_board = 0.007
 default_x_board, default_y_board = (-0.18, 0.04)
 
 circle_2d_pts = build_circle_grid_pts(nb_col, nb_row, circle_r)
 circle_2d_pts_board = build_circle_grid_pts(nb_col, nb_row, circle_r_board)
-  
+
 
 proj_obj_pts = []
 proj_circle_pts = []
@@ -131,12 +131,12 @@ if __name__ == '__main__':
             if ret:
                 # Find projected circles
                 ret, frame, circles_2d_cam, circles_3d = detect_circle_grid(frame, gray, cam_mtx, cam_dist, (nb_col, nb_row), rvec, tvec, H)
-            
+
             if ret:
                 consecutive_frames += 1
             else:
                 consecutive_frames = 0
-            
+
             if consecutive_frames > 5:
                 n = 0
                 while os.path.exists(os.path.join(calibration_folder,f'calibrate_{n}.jpg')):
@@ -145,9 +145,9 @@ if __name__ == '__main__':
                 proj_obj_pts.append(circles_3d)
                 proj_circle_pts.append(circle_2d)
                 print('Saved calibration image')
-                consecutive_frames = 0                    
+                consecutive_frames = 0
 
-            
+
             proj_img = img_circle.copy()
             # if proj_mtx is not None and proj_dist is not None and rvec is not None and tvec is not None:
 
@@ -158,13 +158,13 @@ if __name__ == '__main__':
             max_x = np.max(circle_2d[:,0]) + white_padding
             min_y = np.min(circle_2d[:,1]) - white_padding
             max_y = np.max(circle_2d[:,1]) + white_padding
-            proj_img[min_y:max_y, min_x:max_x] = cv2.bitwise_not(proj_img[min_y:max_y, min_x:max_x]) 
+            proj_img[min_y:max_y, min_x:max_x] = cv2.bitwise_not(proj_img[min_y:max_y, min_x:max_x])
             for c in circle_2d:
                 proj_img = cv2.circle(proj_img, tuple(c.astype(np.int32)), circle_r, (0,0,0), cv2.FILLED)
             resized_frame = cv2.resize(frame, (960, 540))
             cv2.imshow('frame', resized_frame)
             cv2.imshow('circle', proj_img)
-        
+
         keyPressed = cv2.waitKey(1)
         if keyPressed == ord('q'):
             cam.stop_cam()
