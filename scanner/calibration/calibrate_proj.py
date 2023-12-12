@@ -17,6 +17,8 @@ def detect_markers(frame, gray, k, dist, dictionary, params, draw=True):
     tvec = None
     ret = False
     H = None
+    # SUB PIXEL CORNER DETECTION CRITERION
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.00001)
 
     # Detect markers and corners
     corners, ids, rejected = cv2.aruco.detectMarkers(gray, dictionary, parameters=params)
@@ -24,6 +26,9 @@ def detect_markers(frame, gray, k, dist, dictionary, params, draw=True):
     if corners is not None and len(corners) > 0:
         if draw:
             frame = cv2.aruco.drawDetectedMarkers(frame, corners, ids)
+        for corner in corners:
+            cv2.cornerSubPix(gray, corner, (3,3), (-1,-1), criteria)
+
         ret, charuco_corners, charuco_ids = cv2.aruco.interpolateCornersCharuco(corners, ids, gray, charuco_board)
         if charuco_ids is not None and len(charuco_ids) > 0:
             if draw:
@@ -76,8 +81,8 @@ params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_NONE
 #cv2.imwrite('charuco.jpg', charuco_board.generateImage((1000, 1000), 5, 1))
 
 # Get previous calibration data for the camera
-cam_mtx = np.load('data/calib_results/mtx.npy')
-cam_dist = np.load('data/calib_results/dist.npy')
+cam_mtx = np.load('data/cam_mtx.npy')
+cam_dist = np.load('data/cam_dist.npy')
 
 # Get previous calibration data for the camera
 proj_mtx = None
@@ -201,20 +206,20 @@ if __name__ == '__main__':
                     else:
                         print('Bad image:', fname)
 
-            print('Camera calibration')
-            ret, cam_mtx, cam_dist, rvecs, tvecs = cv2.calibrateCamera(proj_obj_pts, cam_circle_pts, (1920,1080), None, None)
-            print(cam_mtx)
-            print(cam_dist)
-            print('Error', ret)
+            # print('Camera calibration')
+            # ret, cam_mtx, cam_dist, rvecs, tvecs = cv2.calibrateCamera(proj_obj_pts, cam_circle_pts, (1920,1080), None, None)
+            # print(cam_mtx)
+            # print(cam_dist)
+            # print('Error', ret)
 
             print('\nProjector calibration')
-            ret, proj_mtx, proj_dist, rvecs, tvecs = cv2.calibrateCamera(proj_obj_pts, proj_circle_pts, (1920,1080), None, None)
+            ret, proj_mtx, proj_dist, rvecs, tvecs = cv2.calibrateCamera(proj_obj_pts, proj_circle_pts, (1920,1080), None, None, flags=cv2.CALIB_RATIONAL_MODEL)
             print(proj_mtx)
             print(proj_dist)
             print('Error', ret)
 
             print('\nStereo calibration')
-            error, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_FIX_INTRINSIC) #, flags=cv2.CALIB_USE_INTRINSIC_GUESS)#
+            error, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_FIX_INTRINSIC + cv2.CALIB_RATIONAL_MODEL) #, flags=cv2.CALIB_USE_INTRINSIC_GUESS)#
             #error, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_USE_INTRINSIC_GUESS) #, flags=cv2.)#
             print('Camera parameters')
             print(cam_mtx, cam_dist)
@@ -227,16 +232,14 @@ if __name__ == '__main__':
 
             R1, R2, P1, P2, Q, _, _ = cv2.stereoRectify(cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), proj_R, proj_T)
 
-            # Save points
-            np.save('./data/calib_results/proj_obj_pts.npy', proj_obj_pts)
-            np.save('./data/calib_results/proj_circle_pts.npy', proj_circle_pts)
-            np.save('./data/calib_results/cam_circle_pts.npy', cam_circle_pts)
+            # # Save points
+            # np.save('./data/calib_results/proj_obj_pts.npy', proj_obj_pts)
+            # np.save('./data/calib_results/proj_circle_pts.npy', proj_circle_pts)
+            # np.save('./data/calib_results/cam_circle_pts.npy', cam_circle_pts)
 
-            # Save calibration results
+            # # Save calibration results
             np.save('./data/proj_mtx.npy', proj_mtx)
             np.save('./data/proj_dist.npy', proj_dist)
-            np.save('./data/mtx.npy', cam_mtx)
-            np.save('./data/dist.npy', cam_dist)
             np.save('./data/R.npy', proj_R)
             np.save('./data/T.npy', proj_T)
             np.save('./data/R1.npy', R1)
