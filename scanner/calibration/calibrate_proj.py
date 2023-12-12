@@ -213,13 +213,13 @@ if __name__ == '__main__':
             # print('Error', ret)
 
             print('\nProjector calibration')
-            ret, proj_mtx, proj_dist, rvecs, tvecs = cv2.calibrateCamera(proj_obj_pts, proj_circle_pts, (1920,1080), None, None, flags=cv2.CALIB_RATIONAL_MODEL)
+            ret, proj_mtx, proj_dist, rvecs, tvecs = cv2.calibrateCamera(proj_obj_pts, proj_circle_pts, (1920,1080), None, None)
             print(proj_mtx)
             print(proj_dist)
             print('Error', ret)
 
             print('\nStereo calibration')
-            error, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_FIX_INTRINSIC + cv2.CALIB_RATIONAL_MODEL) #, flags=cv2.CALIB_USE_INTRINSIC_GUESS)#
+            error, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_FIX_INTRINSIC) #, flags=cv2.CALIB_USE_INTRINSIC_GUESS)#
             #error, cam_mtx, cam_dist, proj_mtx, proj_dist, proj_R, proj_T,_,_ = cv2.stereoCalibrate(proj_obj_pts, cam_circle_pts, proj_circle_pts, cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), flags=cv2.CALIB_USE_INTRINSIC_GUESS) #, flags=cv2.)#
             print('Camera parameters')
             print(cam_mtx, cam_dist)
@@ -237,7 +237,7 @@ if __name__ == '__main__':
             # np.save('./data/calib_results/proj_circle_pts.npy', proj_circle_pts)
             # np.save('./data/calib_results/cam_circle_pts.npy', cam_circle_pts)
 
-            # # Save calibration results
+            # Save calibration results
             np.save('./data/proj_mtx.npy', proj_mtx)
             np.save('./data/proj_dist.npy', proj_dist)
             np.save('./data/R.npy', proj_R)

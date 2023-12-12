@@ -42,8 +42,8 @@ params = cv2.aruco.DetectorParameters()
 params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_NONE
 
 # Get previous calibration data for the camera
-cam_mtx = np.load('data/calib_results/mtx.npy')
-cam_dist = np.load('data/calib_results/dist.npy')
+cam_mtx = np.load('data/calib_results/cam_mtx.npy')
+cam_dist = np.load('data/calib_results/cam_dist.npy')
 
 # Create folder to save calibration images
 calibration_folder = './data/CalibrationImgs/camera/'
@@ -111,7 +111,7 @@ if __name__ == '__main__':
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
                 # Detect markers and corners
-                ret, frame, corners, ids = detect_markers(frame, gray, cam_mtx, cam_dist, dictionary, params)
+                ret, frame, corners, ids = detect_markers(frame, gray, cam_mtx, cam_dist, dictionary, params, draw=False)
 
                 if ret:
                     allCorners.append(corners)
@@ -125,7 +125,7 @@ if __name__ == '__main__':
                                  [    0.,    0.,           1.]])
 
             distCoeffsInit = np.zeros((5,1))
-            flags = (cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_RATIONAL_MODEL + cv2.CALIB_FIX_ASPECT_RATIO)
+            flags = (cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_FIX_ASPECT_RATIO)
             ret, cam_mtx, cam_dist, rvecs, tvecs = cv2.aruco.calibrateCameraCharuco(allCorners, allIds, charuco_board, (1920,1080), cameraMatrixInit, distCoeffsInit, flags = flags, criteria=(cv2.TERM_CRITERIA_EPS & cv2.TERM_CRITERIA_COUNT, 10000, 1e-9))
             print(cam_mtx)
             print(cam_dist)
