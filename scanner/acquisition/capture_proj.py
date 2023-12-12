@@ -10,10 +10,10 @@ if __name__ == '__main__':
     cam = Camera(0, width=1920, height=1080, fps=30)
 
     # Parameters
-    wait_time = 0.2 # in seconds
+    wait_time = 0.3 # in seconds
 
     # Generate Gray code image sequence
-    width, height = (800, 600)
+    width, height = (1280, 720)
     gray_codes = get_gray_codes(width, height)
     image_seq = get_image_sequence(gray_codes, width, height)
     seq_len = len(image_seq)
