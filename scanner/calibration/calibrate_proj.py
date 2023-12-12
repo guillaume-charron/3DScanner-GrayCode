@@ -232,11 +232,6 @@ if __name__ == '__main__':
 
             R1, R2, P1, P2, Q, _, _ = cv2.stereoRectify(cam_mtx, cam_dist, proj_mtx, proj_dist, (1920,1080), proj_R, proj_T)
 
-            # # Save points
-            # np.save('./data/calib_results/proj_obj_pts.npy', proj_obj_pts)
-            # np.save('./data/calib_results/proj_circle_pts.npy', proj_circle_pts)
-            # np.save('./data/calib_results/cam_circle_pts.npy', cam_circle_pts)
-
             # Save calibration results
             np.save('./data/proj_mtx.npy', proj_mtx)
             np.save('./data/proj_dist.npy', proj_dist)
