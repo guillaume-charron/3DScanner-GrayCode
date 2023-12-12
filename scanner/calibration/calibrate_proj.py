@@ -71,18 +71,15 @@ def build_circle_grid_pts(nb_col, nb_row, circle_r):
             count += 1
     return circle_2d_pts
 
-
-
 # Define the charuco board parameters
 dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
 charuco_board = cv2.aruco.CharucoBoard((5, 7), 0.04, .02, dictionary)
 params = cv2.aruco.DetectorParameters()
 params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_NONE
-#cv2.imwrite('charuco.jpg', charuco_board.generateImage((1000, 1000), 5, 1))
 
 # Get previous calibration data for the camera
-cam_mtx = np.load('data/cam_mtx.npy')
-cam_dist = np.load('data/cam_dist.npy')
+cam_mtx = np.load('data/calib_results/cam_mtx.npy')
+cam_dist = np.load('data/calib_results/cam_dist.npy')
 
 # Get previous calibration data for the camera
 proj_mtx = None
@@ -91,9 +88,8 @@ if os.path.exists('./data/calib_results/proj_mtx.npy') and os.path.exists('./dat
     proj_mtx = np.load('./data/calib_results/proj_mtx.npy')
     proj_dist = np.load('./data/calib_results/proj_dist.npy')
 
-# Load circle grid image
+# Create empty image to draw circles
 img_circle = np.zeros((1080,1920,4), dtype=np.uint8)
-#img_circle = cv2.bitwise_not(img_circle) # TODO remove when projected (black = no background when projected)
 
 # Create folder to save calibration images
 calibration_folder = './data/CalibrationImgs/projector/'
@@ -105,12 +101,8 @@ nb_col = 4
 nb_row = 11
 circle_r = 15
 default_x, default_y = (800, 350)
-circle_r_board = 0.007
-default_x_board, default_y_board = (-0.18, 0.04)
 
 circle_2d_pts = build_circle_grid_pts(nb_col, nb_row, circle_r)
-circle_2d_pts_board = build_circle_grid_pts(nb_col, nb_row, circle_r_board)
-
 
 proj_obj_pts = []
 proj_circle_pts = []
