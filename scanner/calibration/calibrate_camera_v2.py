@@ -25,10 +25,11 @@ def detect_markers(frame, gray, k, dist, dictionary, params, draw=True):
         if charuco_ids is not None and len(charuco_ids) > 0:
             if draw:
                 frame = cv2.aruco.drawDetectedCornersCharuco(frame, charuco_corners, charuco_ids)
-            ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(charuco_corners, charuco_ids, charuco_board, k, dist, None, None)
+            if cam_mtx is not None and cam_dist is not None:
+                ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(charuco_corners, charuco_ids, charuco_board, k, dist, None, None)
 
-            if ret and draw:
-                frame = cv2.drawFrameAxes(frame, k, dist, rvec, tvec, 0.1)
+                if ret and draw:
+                    frame = cv2.drawFrameAxes(frame, k, dist, rvec, tvec, 0.1)
 
             allCorners = charuco_corners
             allIds = charuco_ids
@@ -42,19 +43,29 @@ params = cv2.aruco.DetectorParameters()
 params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_NONE
 
 # Get previous calibration data for the camera
-cam_mtx = np.load('data/calib_results/cam_mtx.npy')
-cam_dist = np.load('data/calib_results/cam_dist.npy')
+result_folder = './data/calib_results/cam_1440/'
+cam_mtx = None
+cam_dist = None
+if os.path.exists(os.path.join(result_folder,'cam_mtx.npy')):
+    cam_mtx = np.load(os.path.join(result_folder,'cam_mtx.npy'))
+
+if os.path.exists(os.path.join(result_folder,'cam_dist.npy')):
+    cam_dist = np.load(os.path.join(result_folder,'cam_dist.npy'))
 
 # Create folder to save calibration images
-calibration_folder = './data/CalibrationImgs/camera/'
+calibration_folder = './data/CalibrationImgs/camera_1440/'
 if not os.path.exists(calibration_folder):
     os.makedirs(calibration_folder)
 
 allCorners = []
 allIds = []
 
+width, height = (2560, 1440)
+
+remove_dist = False
+
 if __name__ == '__main__':
-    cam = Camera(0)
+    cam = Camera(0, width=width, height=height)
     consecutive_frames = 0
     while True:
         frame = cam.get_frame()
@@ -69,29 +80,24 @@ if __name__ == '__main__':
             # Detect markers and corners
             ret, frame, corners, ids = detect_markers(frame, gray, cam_mtx, cam_dist, dictionary, params)
 
-            #if ret:
-            #     consecutive_frames += 1
-            # else:
-            #     consecutive_frames = 0
-
-            # if consecutive_frames > 5:
-            #     n = 0
-            #     while os.path.exists(os.path.join(calibration_folder,f'calibrate_{n}.jpg')):
-            #         n += 1
-            #     cv2.imwrite(os.path.join(calibration_folder,f'calibrate_{n}.jpg'), og_frame)
-            #     allCorners.append(corners)
-            #     allIds.append(ids)
-            #     print('Saved calibration image')
-            #     consecutive_frames = 0
-
-
-            resized_frame = cv2.resize(frame, (960, 540))
+            if cam_mtx is not None and cam_dist is not None and remove_dist:
+            # Undistort image
+                newcameramtx, roi = cv2.getOptimalNewCameraMatrix(cam_mtx, cam_dist, (width,height), 1, (width,height))
+                dst = cv2.undistort(frame, cam_mtx, cam_dist, None, newcameramtx)
+                # crop the image
+                x, y, w, h = roi
+                dst = dst[y:y+h, x:x+w]
+                resized_frame = cv2.resize(dst, (960, 540))
+            else:
+                resized_frame = cv2.resize(frame, (960, 540))
             cv2.imshow('frame', resized_frame)
 
         keyPressed = cv2.waitKey(1)
         if keyPressed == ord('q'):
             cam.stop_cam()
             break
+        if keyPressed == ord('d'):
+            remove_dist = not remove_dist
         if keyPressed == ord('c'):
             if ret is not None:
                 n = 0
@@ -107,6 +113,7 @@ if __name__ == '__main__':
             images = glob.glob(os.path.join(calibration_folder,'*.jpg'))
             for fname in images:
                 img = cv2.imread(fname)
+                print('Reading image:', fname)
                 # Convert to gray
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -132,7 +139,7 @@ if __name__ == '__main__':
             print('Error', ret)
 
             # Save calibration results
-            np.save('./data/cam_mtx.npy', cam_mtx)
-            np.save('./data/cam_dist.npy', cam_dist)
+            np.save(os.path.join(result_folder, 'cam_mtx.npy'), cam_mtx)
+            np.save(os.path.join(result_folder, 'cam_dist.npy'), cam_dist)
 
 
