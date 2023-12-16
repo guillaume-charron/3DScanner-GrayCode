@@ -5,6 +5,7 @@ import numpy as np
 from scanner.acquisition import Camera
 from scanner.grayCode.generate_codes import get_gray_codes, get_image_sequence
 from scanner.grayCode.decode_codes import get_codes, gray_to_decimal
+from scanner.utils import visualize
 
 if __name__ == '__main__':
     cam = Camera(0, width=2560, height=1440, fps=30)
@@ -94,3 +95,7 @@ if __name__ == '__main__':
     # Save data to files
     np.save(os.path.join(output_path, 'h_pixels.npy'), h_pixels)
     np.save(os.path.join(output_path, 'v_pixels.npy'), v_pixels)
+
+    # Display decoded gray codes
+    color_map_img = visualize.create_color_map(width, height)
+    visualize.plot_decoded_graycodes(h_pixels, v_pixels, color_map_img)
