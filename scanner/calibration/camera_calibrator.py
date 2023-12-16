@@ -9,6 +9,7 @@ class CameraCalibrator(object):
                  cam_height=1080, 
                  cam_mtx=None, 
                  cam_dist=None):
+        
         # Define the charuco board parameters
         self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
         self.charuco_board = cv2.aruco.CharucoBoard((5, 7), 0.04, .02, self.dictionary)
