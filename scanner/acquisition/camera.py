@@ -51,17 +51,17 @@ class Camera(object):
         cv2.imshow('frame', self.frame)
         #cv2.waitKey(self.WAIT_MS)
 
-    def remove_dist(self):
-        h,  w = self.frame.shape[:2]
-        newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, (w,h), 1, (w,h))
-        dst = cv2.undistort(self.frame, self.mtx, self.dist, None, newcameramtx)
-        # crop the image
-        x, y, w, h = roi
-        dst = dst[y:y+h, x:x+w]
-        if self.out_width != dst.shape[1]:
-            self.out_width = dst.shape[1]
-            self.out_height = dst.shape[0]
-        return dst
+    def remove_dist(self, frame):
+        if self.mtx is None or self.dist is None:
+            return frame
+        else:
+            h, w = frame.shape[:2]
+            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.mtx, self.dist, (w,h), 1, (w,h))
+            dst = cv2.undistort(frame, self.mtx, self.dist, None, newcameramtx)
+            # crop the image
+            x, y, w, h = roi
+            dst = dst[y:y+h, x:x+w]
+            return dst
     
     def stop_cam(self):
         self.thread_active = False
