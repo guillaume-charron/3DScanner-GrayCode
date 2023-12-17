@@ -121,8 +121,8 @@ if __name__ == '__main__':
                     np.save(os.path.join(proj_result_folder, 'proj_dist.npy'), proj_dist)
 
                 # Save stereo calibration results
-                np.save(os.path.join(result_folder, 'proj_R.npy'), proj_R)
-                np.save(os.path.join(result_folder, 'proj_T.npy'), proj_T)
+                np.save(os.path.join(result_folder, 'R.npy'), proj_R)
+                np.save(os.path.join(result_folder, 'T.npy'), proj_T)
                 np.save(os.path.join(result_folder, 'R1.npy'), R1)
                 np.save(os.path.join(result_folder, 'R2.npy'), R2)
                 np.save(os.path.join(result_folder, 'P1.npy'), P1)
