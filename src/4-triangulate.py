@@ -7,8 +7,8 @@ from scanner.utils import visualize
 # Declare folders to use for triangulation
 cam_result_folder = './data/calib_results/cam_1440/'
 proj_result_folder = './data/calib_results/proj/'
-stereo_result_folder = './data/calib_results/stereo_setups/groot/'
-gray_code_folder = './data/recordings/groot/'
+stereo_result_folder = './data/calib_results/stereo_setups/2023-12-16/'
+gray_code_folder = './data/recordings/groot_1080p/'
 result_folder = './data/scan/test/'
 
 # Load calibration data
@@ -18,6 +18,16 @@ proj_mtx = np.load(os.path.join(proj_result_folder,'proj_mtx.npy'))
 proj_dist = np.load(os.path.join(proj_result_folder,'proj_dist.npy'))
 proj_R = np.load(os.path.join(stereo_result_folder,'R.npy'))
 proj_T = np.load(os.path.join(stereo_result_folder,'T.npy'))
+
+proj_w, proj_h = (1920, 1080)
+calib_proj_w, calib_proj_h = (1920, 1080)
+
+cam_w, cam_h = (2560, 1440)
+scale_x = proj_w / calib_proj_w
+scale_y = proj_h / calib_proj_h
+proj_mtx[0, :] = proj_mtx[0, :] * scale_x
+proj_mtx[1, :] = proj_mtx[1, :] * scale_y
+
 
 # Load decoded gray codes
 h_pixels = np.load(os.path.join(gray_code_folder,'h_pixels.npy'))

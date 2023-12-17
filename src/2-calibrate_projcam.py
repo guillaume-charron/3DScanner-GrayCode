@@ -8,7 +8,7 @@ from scanner.calibration import ProjCamCalibrator
 # Declare folders to use for calibration
 cam_result_folder = './data/calib_results/cam_1440/'
 proj_result_folder = './data/calib_results/proj/'
-result_folder = './data/calib_results/stereo_setups/testStereo/'
+result_folder = './data/calib_results/stereo_setups/2023-12-16/'
 image_folder = './data/CalibrationImgs/projector/'
 
 # Create folders if they don't exist
@@ -33,9 +33,9 @@ if os.path.exists(os.path.join(cam_result_folder,'cam_dist.npy')):
 proj_mtx = None
 proj_dist = None
 if os.path.exists(os.path.join(proj_result_folder,'proj_mtx.npy')):
-    cam_mtx = np.load(os.path.join(proj_result_folder,'proj_mtx.npy'))
+    proj_mtx = np.load(os.path.join(proj_result_folder,'proj_mtx.npy'))
 if os.path.exists(os.path.join(proj_result_folder,'proj_dist.npy')):
-    cam_dist = np.load(os.path.join(proj_result_folder,'proj_dist.npy'))
+    proj_dist = np.load(os.path.join(proj_result_folder,'proj_dist.npy'))
 
 # Camera parameters
 cam_width, cam_height = (2560, 1440)
@@ -44,7 +44,7 @@ cam_fps = 20
 
 # Projector parameters
 proj_width, proj_height = (1920, 1080)
-calibrate_proj = True
+calibrate_proj = False
 
 # Circle grid parameters
 circle_grid_size = (4, 11)
@@ -113,7 +113,7 @@ if __name__ == '__main__':
         if keyPressed == ord('k'):
             # Calibrate projector and stereo configuration
             try:
-                proj_mtx, proj_dist, proj_R, proj_T, R1, R2, P1, P2, Q = calibrator.calibrate(image_folder, result_folder, calibrate_proj=calibrate_proj)
+                proj_mtx, proj_dist, proj_R, proj_T, R1, R2, P1, P2, Q = calibrator.calibrate(image_folder, calibrate_proj)
 
                 if calibrate_proj:
                     # Save calibration results
