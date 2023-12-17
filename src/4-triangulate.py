@@ -1,12 +1,8 @@
 import os
 import numpy as np
-import cv2
 
 from scanner.triangulation import Triangulate
 from scanner.utils import visualize
-
-
-
 
 # Declare folders to use for triangulation
 cam_result_folder = './data/calib_results/cam_1440/'
