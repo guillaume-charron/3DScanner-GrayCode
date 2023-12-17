@@ -42,4 +42,9 @@ def plot_point_cloud(Pts, colors):
     pcd = pcd.to_legacy()
     pcd.colors = o3d.cpu.pybind.utility.Vector3dVector(colors)
 
-    o3d.visualization.draw_geometries([pcd])
+    print('Remove outlier in point cloud')
+    cl, ind = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=0.5)
+    inlier_cloud = pcd.select_by_index(ind)
+
+    print('Visualize the result')
+    o3d.visualization.draw_geometries([inlier_cloud])

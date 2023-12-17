@@ -7,16 +7,23 @@ from scanner.grayCode.generate_codes import get_gray_codes, get_image_sequence
 from scanner.grayCode.decode_codes import get_codes, gray_to_decimal
 from scanner.utils import visualize
 
+# Camera parameters
+cam_width, cam_height = (1920, 1080)
+cam_src = 0
+cam_fps = 30
+
+# Projector parameters
+proj_width, proj_height = (1920, 1080)
+
 if __name__ == '__main__':
-    cam = Camera(0, width=2560, height=1440, fps=30)
+    cam = Camera(cam_src, width=cam_width, height=cam_height, fps=cam_fps)
 
     # Parameters
-    wait_time = 0.5 # in seconds
+    wait_time = 0.3 # in seconds
 
     # Generate Gray code image sequence
-    width, height = (800, 600)
-    gray_codes = get_gray_codes(width, height)
-    image_seq = get_image_sequence(gray_codes, width, height)
+    gray_codes = get_gray_codes(proj_width, proj_height)
+    image_seq = get_image_sequence(gray_codes, proj_width, proj_height)
     seq_len = len(image_seq)
     seq_id = 0
     gray_images = None
@@ -97,5 +104,5 @@ if __name__ == '__main__':
     np.save(os.path.join(output_path, 'v_pixels.npy'), v_pixels)
 
     # Display decoded gray codes
-    color_map_img = visualize.create_color_map(width, height)
+    color_map_img = visualize.create_color_map(proj_width, proj_height)
     visualize.plot_decoded_graycodes(h_pixels, v_pixels, color_map_img)

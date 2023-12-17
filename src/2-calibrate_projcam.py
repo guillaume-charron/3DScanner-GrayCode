@@ -5,11 +5,14 @@ import numpy as np
 from scanner.acquisition import Camera
 from scanner.calibration import ProjCamCalibrator
 
+# Set to True to calibrate projector
+calibrate_proj = False
+
 # Declare folders to use for calibration
-cam_result_folder = './data/calib_results/cam_1440/'
+cam_result_folder = './data/calib_results/cam_1080/'
 proj_result_folder = './data/calib_results/proj/'
-result_folder = './data/calib_results/stereo_setups/2023-12-16/'
-image_folder = './data/CalibrationImgs/projector/'
+result_folder = './data/calib_results/stereo_setups/2023-12-17(1080)/'
+image_folder = './data/CalibrationImgs/projector(2023-12-17)(1080)/'
 
 # Create folders if they don't exist
 if not os.path.exists(cam_result_folder):
@@ -38,13 +41,12 @@ if os.path.exists(os.path.join(proj_result_folder,'proj_dist.npy')):
     proj_dist = np.load(os.path.join(proj_result_folder,'proj_dist.npy'))
 
 # Camera parameters
-cam_width, cam_height = (2560, 1440)
+cam_width, cam_height = (1920, 1080)
 cam_src = 0
-cam_fps = 20
+cam_fps = 30
 
 # Projector parameters
 proj_width, proj_height = (1920, 1080)
-calibrate_proj = False
 
 # Circle grid parameters
 circle_grid_size = (4, 11)
