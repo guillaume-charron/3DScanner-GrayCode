@@ -23,13 +23,9 @@ class Camera(object):
         self.thread.daemon = True
         self.thread.start()
 
-        # Get Intrinsics parameters
+        # Set Intrinsics parameters
         self.mtx = None
         self.dist = None
-        if os.path.exists('./data/mtx.npy'):
-            self.mtx = np.load('./data/mtx.npy')
-        if os.path.exists('./data/dist.npy'):
-            self.dist = np.load('./data/dist.npy')
 
         self.isNewFrame = False
 
