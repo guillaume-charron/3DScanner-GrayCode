@@ -1,10 +1,7 @@
 import os
-import time
 import cv2 
 import numpy as np
 from tqdm import tqdm
-import shutil
-import pandas as pd
 
 def read_images(folder):
     files = sorted(os.listdir(folder), key=len)
@@ -122,10 +119,6 @@ def gray_to_decimal(gray_code_list):
     gray_code_list = [str(gray_code_list[i]) for i in range(0, len(gray_code_list))]
     gray_code_str = ''.join(gray_code_list)
     if '-1' in gray_code_str:
-        #count = gray_code_str.count('-1')
-        # if count < 1:
-        #     gray_code_str = gray_code_str.replace('-1', '0')
-        # else:
         return -1
     
     gray_code_binary = int(gray_code_str, 2)
@@ -134,31 +127,3 @@ def gray_to_decimal(gray_code_list):
 def get_codes(images):
     L_d, L_g = get_direct_indirect(images)
     return get_is_lit(images, L_d, L_g)
-
-# if __name__ == '__main__':
-#     folder = './data/recordings/tete_2'
-#     filtered_folder = folder+'_filtered'
-#     images = None
-#     if not os.path.exists(filtered_folder):
-#         os.mkdir(filtered_folder)
-
-#         print('Read images')
-#         images, file_names = read_images(folder)
-#         print('Remove bad images')
-#         filtered_indexes = remove_bad_images(images)
-#         print('Save filtered images')
-#         for file_name in tqdm(file_names[filtered_indexes]):
-#             shutil.copy(os.path.join(folder,file_name), os.path.join(filtered_folder,file_name))
-#         images = images[filtered_indexes]
-#     else:
-#         print('Read images')
-#         images, file_names = read_images(filtered_folder)
-
-#     print(f'Found {len(images)} good images')
-
-#     print('Decoding codes')
-#     gray_images = to_gray(images)
-#     h_pixel, v_pixel = get_codes(gray_images)
-#     print('Save decoded codes')
-#     np.save('./data/h_pixel.npy', h_pixel)
-#     np.save('./data/v_pixel.npy', v_pixel)
