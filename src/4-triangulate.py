@@ -6,11 +6,11 @@ from scanner.triangulation import Triangulate
 from scanner.utils import visualize
 
 # Declare folders to use for triangulation
-cam_result_folder = './data/calib_results/cam_1440/'
+cam_result_folder = './data/calib_results/cam_1080/'
 proj_result_folder = './data/calib_results/proj/'
-stereo_result_folder = './data/calib_results/stereo_setups/2023-12-16/'
-gray_code_folder = './data/recordings/groot_720p/'
-output_folder = './data/point_clouds/groot_720/'
+stereo_result_folder = './data/calib_results/stereo_setups/2023-12-17(1080)/'
+gray_code_folder = './data/recordings/groot_1080/'
+output_folder = './data/point_clouds/groot_1080/'
 
 # Create folders if they don't exist
 if not os.path.exists(output_folder):
@@ -30,7 +30,7 @@ else:
     img_white = cv2.cvtColor(img_white, cv2.COLOR_BGR2RGB)
 
     # Set resolutions
-    proj_w, proj_h = (1280, 720)
+    proj_w, proj_h = (1920, 1080)
     calib_proj_w, calib_proj_h = (1920, 1080)
     cam_w, cam_h = (img_white.shape[1], img_white.shape[0])
 
@@ -71,4 +71,4 @@ else:
 pts_3d, colors = triangulator.filter_3d_pts(pts_3d, colors, threshold=0.5)
 
 # Visualize point cloud
-visualize.plot_point_cloud(pts_3d, colors)
+visualize.plot_point_cloud(pts_3d, colors, output_folder)

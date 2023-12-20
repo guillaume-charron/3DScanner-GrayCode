@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import open3d as o3d
@@ -35,9 +36,10 @@ def plot_decoded_graycodes(h_pixels, v_pixels, color_map_img):
                 result_img[j, i] = color_map_img[v_value, h_value]
 
     plt.imshow(result_img)
+    plt.axis('off')
     plt.show()
 
-def plot_point_cloud(Pts, colors):
+def plot_point_cloud(Pts, colors, save_to):
     pcd = o3d.t.geometry.PointCloud(o3c.Tensor(Pts.T, o3c.float32))
     pcd = pcd.to_legacy()
     pcd.colors = o3d.cpu.pybind.utility.Vector3dVector(colors)
@@ -46,5 +48,23 @@ def plot_point_cloud(Pts, colors):
     cl, ind = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=0.5)
     inlier_cloud = pcd.select_by_index(ind)
 
-    print('Visualize the result')
-    o3d.visualization.draw_geometries([inlier_cloud])
+    print('Save ply file')
+    o3d.io.write_point_cloud(os.path.join(save_to, 'cloud.ply'), inlier_cloud)
+
+    def change_background_to_black(vis):
+        opt = vis.get_render_option()
+        opt.background_color = np.asarray([0, 0, 0])
+        return False
+
+    def capture_image(vis):
+        image = vis.capture_screen_float_buffer()
+        id = 0
+        while os.path.exists(os.path.join(save_to, f'cloud_{id}.png')):
+            id+=1
+        plt.imsave(os.path.join(save_to,f'cloud_{id}.png'), np.asarray(image))
+        return False
+
+    key_to_callback = {}
+    key_to_callback[ord("K")] = change_background_to_black
+    key_to_callback[ord(".")] = capture_image
+    o3d.visualization.draw_geometries_with_key_callbacks([inlier_cloud], key_to_callback)
