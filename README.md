@@ -6,12 +6,12 @@
   <img src="data/point_clouds/Elephant/360view.gif" width="32%" />
 </p>
 
-- [Structured Light 3D Scanner](#structured-light-3d-scanner)
-  - [Installation](#installation)
-  - [Scanner module](#scanner-module)
-  - [Application usage](#application-usage)
-  - [Disclaimer](#disclaimer)
-  - [Citation](#citation)
+## Table of content
+- [Installation](#installation)
+- [Scanner module](#scanner-module)
+- [Application usage](#application-usage)
+- [Disclaimer](#disclaimer)
+- [Citation](#citation)
 
 This repo uses a projector and camera to scan an objet using structured light (Gray codes). The projected patterns are captured by the camera and the 3D points are triangulated using the calibration info of the stereo setup. The project was made as a final assignment for the IFT6145 class at UdeM.
 
@@ -78,9 +78,20 @@ Run the script by providing all the right path for the intrinsic parameters of t
 This repository is for educational purposes only. The code and algorithm implemented are derived from the original authors' repositories and papers. All rights are reserved to the original authors of the papers and repositories this code is based on.
 
 ## Citation
-
+This code is based on the implementation that can be found in this [repository](https://github.com/sjnarmstrong/gray-code-structured-light/tree/master?fbclid=IwAR3WoIdu-mVJEMWzUqAHYBba239Xw2OCyVLBepdD05pllM9HTA3PPwxCibw) and on this [tutorial](https://www.morethantechnical.com/blog/2017/11/17/projector-camera-calibration-the-easy-way/).
 If you find this work useful, please ensure that you cite the original authors:
 ```
+@INPROCEEDINGS{7781767,
+  author={Yang, Liming and Normand, Jean-Marie and Moreau, Guillaume},
+  booktitle={2016 IEEE International Symposium on Mixed and Augmented Reality (ISMAR)}, 
+  title={Practical and Precise Projector-Camera Calibration}, 
+  year={2016},
+  volume={},
+  number={},
+  pages={63-70},
+  doi={10.1109/ISMAR.2016.22}
+}
+
 @inproceedings{3D-Modeling,
 	author = {Xu, Yi and Aliaga, Daniel G.},
 	title = {Robust Pixel Classification for 3D Modeling with Structured Light},
@@ -125,3 +136,4 @@ If you find this work useful, please ensure that you cite the original authors:
 	keywords = {coded illumination, direct illumination, global illumination, image decomposition, image manipulation, interreflections, subsurface scattering, translucency, volumetric scattering},
 } 
 ```
+
