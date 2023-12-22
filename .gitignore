@@ -161,4 +161,4 @@ cython_debug/
 *.jpg
 *.png
 *.mp4
-/data/Recordings
+/data
