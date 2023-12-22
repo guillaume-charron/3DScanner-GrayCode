@@ -5,11 +5,48 @@ import open3d as o3d
 from open3d import core as o3c
 
 def arr_creat(upperleft, upperright, lowerleft, lowerright, arrwidth, arrheight):
+    """Creates an array of size (arrwidth, arrheight, 1) with values ranging from upperleft to upperright in the first dimension and lowerleft to lowerright in the second dimension.
+    
+    Parameters:
+    ----------
+    upperleft : int
+        The value to start the first dimension with.
+    upperright : int
+        The value to end the first dimension with.
+    lowerleft : int
+        The value to start the second dimension with.
+    lowerright : int
+        The value to end the second dimension with.
+    arrwidth : int
+        The width of the array.
+    arrheight : int
+        The height of the array.
+    
+    Returns:
+    -------
+    arr : np.array
+        The array with the specified values.
+    """
     arr = np.linspace(np.linspace(lowerleft, lowerright, arrwidth), 
                       np.linspace(upperleft, upperright, arrwidth), arrheight, dtype=int)
     return arr[:, :, None]
 
 def create_color_map(width, height):
+    """
+    Creates a color map for the decoded gray codes.
+
+    Parameters:
+    ----------
+    width : int
+        The width of the color map.
+    height : int
+        The height of the color map.
+    
+    Returns:
+    -------
+    img : np.array
+        The color map.
+    """
     r = arr_creat(0,   255, 0,   255, width, height)
     g = arr_creat(0,   0,   255, 0, width, height)
     b = arr_creat(255, 255, 0,   0, width, height)
@@ -19,6 +56,18 @@ def create_color_map(width, height):
     return img
 
 def plot_decoded_graycodes(h_pixels, v_pixels, color_map_img):
+    """
+    Plots the decoded gray codes.
+
+    Parameters:
+    ----------
+    h_pixels : np.array
+        The decoded horizontal gray codes.
+    v_pixels : np.array
+        The decoded vertical gray codes.
+    color_map_img : np.array
+        The color map.
+    """
     width = color_map_img.shape[1]
     height = color_map_img.shape[0]
 
@@ -40,6 +89,18 @@ def plot_decoded_graycodes(h_pixels, v_pixels, color_map_img):
     plt.show()
 
 def plot_point_cloud(Pts, colors, save_to):
+    """
+    Plots the point cloud.
+
+    Parameters:
+    ----------
+    Pts : np.array
+        The point cloud.
+    colors : np.array
+        The colors of each point in the cloud.
+    save_to : str
+        The path to save the point cloud to.
+    """
     pcd = o3d.t.geometry.PointCloud(o3c.Tensor(Pts.T, o3c.float32))
     pcd = pcd.to_legacy()
     pcd.colors = o3d.cpu.pybind.utility.Vector3dVector(colors)

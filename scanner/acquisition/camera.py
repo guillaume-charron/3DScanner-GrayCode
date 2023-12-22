@@ -30,6 +30,9 @@ class Camera(object):
         self.isNewFrame = False
 
     def update(self):
+        """
+        Update current frame  
+        """
         while self.thread_active:
             if self.capture.isOpened():
                 (self.status, self.frame) = self.capture.read()
@@ -37,17 +40,34 @@ class Camera(object):
             time.sleep(self.SECONDS_PER_IMAGE)
     
     def get_frame(self):
+        """
+        Returns the current frame
+        """
         if self.isNewFrame:
             self.isNewFrame = False
             return self.frame
         return None
 
     def show_frame(self):
-        #im = self.remove_dist()
+        """
+        Shows the current frame
+        """
         cv2.imshow('frame', self.frame)
-        #cv2.waitKey(self.WAIT_MS)
 
     def remove_dist(self, frame):
+        """
+        Removes distortion from a frame
+
+        Parameters:
+        ----------
+        frame : np.array
+            The frame to remove distortion from.
+        
+        Returns:
+        -------
+        dst : np.array
+            The frame without distortion.
+        """
         if self.mtx is None or self.dist is None:
             return frame
         else:
@@ -60,6 +80,9 @@ class Camera(object):
             return dst
     
     def stop_cam(self):
+        """
+        Stops the camera
+        """
         self.thread_active = False
         self.capture.release()
         cv2.destroyAllWindows()

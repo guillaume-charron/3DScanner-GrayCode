@@ -4,6 +4,21 @@ import numpy as np
 from tqdm import tqdm
 
 def read_images(folder):
+    """
+    Reads all images from a folder.
+
+    Parameters:
+    ----------
+    folder : str
+        The folder to read the images from.
+    
+    Returns:
+    -------
+    images : np.array
+        The images.
+    file_names : np.array
+        The names of the images.
+    """
     files = sorted(os.listdir(folder), key=len)
     images = None
     file_names = np.array([])
@@ -17,6 +32,19 @@ def read_images(folder):
     return images, file_names
 
 def remove_bad_images(images):
+    """
+    Removes bad images from a captured sequence (transition images)
+    
+    Parameters:
+    ----------
+    images : np.array
+        The images.
+    
+    Returns:
+    -------
+    filtered_indexes : np.array
+        The indexes of the images to keep.
+    """
     diff_thresh = 50
     diff1 = len(np.argwhere(cv2.absdiff(images[0], images[1]) > diff_thresh))
     diff2 = len(np.argwhere(cv2.absdiff(images[1], images[2]) > diff_thresh))
@@ -24,7 +52,6 @@ def remove_bad_images(images):
     for i, image in enumerate(tqdm(images[2:-1])):
         sub = cv2.absdiff(images[i+3], image)
         diff3 = len(np.argwhere(sub > diff_thresh))
-        #print(diff1,diff2,diff3)
 
         if diff1 < diff2 and diff1 < diff3 and diff2 < diff3 and i+1 not in filtered_indexes:
             if len(filtered_indexes) == 0 or (filtered_indexes[len(filtered_indexes)-1] != i and filtered_indexes[len(filtered_indexes)-1] != i+2):
@@ -41,6 +68,19 @@ def remove_bad_images(images):
     return filtered_indexes
 
 def to_gray(images):
+    """
+    Converts a set of images to grayscale.
+
+    Parameters:
+    ----------
+    images : np.array
+        The images.
+    
+    Returns:
+    -------
+    gray_images : np.array
+        The grayscale images.
+    """
     gray_images = np.empty((images.shape[0], images.shape[1], images.shape[2]))
     for i, image in enumerate(images):
         gray_images[i] = cv2.cvtColor(image.astype(np.uint8), cv2.COLOR_BGR2GRAY)
@@ -48,6 +88,21 @@ def to_gray(images):
 
 # Took from algorithm described in https://github.com/sjnarmstrong/gray-code-structured-light/
 def get_direct_indirect(images):
+    """
+    Calculates the direct and indirect illumination.
+
+    Parameters:
+    ----------
+    images : np.array
+        The images.
+    
+    Returns:
+    -------
+    L_d : np.array
+        The direct illumination.
+    L_g : np.array
+        The indirect illumination.
+    """
     black = images[0]
     white = images[1]
 
@@ -68,6 +123,29 @@ def get_direct_indirect(images):
 
 # Took from algorithm described in https://github.com/sjnarmstrong/gray-code-structured-light/
 def get_is_lit(images, L_d, L_g, eps=1, m=10):
+    """
+    Calculates the Gray codes.
+
+    Parameters:
+    ----------
+    images : np.array
+        The images.
+    L_d : np.array
+        The direct illumination.
+    L_g : np.array
+        The indirect illumination.
+    eps : int
+        The epsilon value.
+    m : int
+        The m value.
+    
+    Returns:
+    -------
+    h_codes : np.array
+        The horizontal Gray codes.
+    v_codes : np.array
+        The vertical Gray codes.
+    """
     pattern_len = int((len(images) - 2) / 4)
     pattern_images = images[2:]
     normal_patterns = pattern_images[:pattern_len*2]
@@ -109,6 +187,19 @@ def get_is_lit(images, L_d, L_g, eps=1, m=10):
 
 # https://stackoverflow.com/a/72028021
 def gray_decode(n):
+    """
+    Gray code to integer.
+
+    Parameters:
+    ----------
+    n : int
+        The Gray code.
+    
+    Returns:
+    -------
+    n : int
+        The integer.
+    """
     m = n >> 1
     while m:
         n ^= m
@@ -116,6 +207,19 @@ def gray_decode(n):
     return n
 
 def gray_to_decimal(gray_code_list):
+    """
+    Gray code to decimal.
+
+    Parameters:
+    ----------
+    gray_code_list : list
+        The Gray code in a list of integers.
+    
+    Returns:
+    -------
+    gray_code_decimals : int
+        The decimal value.
+    """
     gray_code_list = [str(gray_code_list[i]) for i in range(0, len(gray_code_list))]
     gray_code_str = ''.join(gray_code_list)
     if '-1' in gray_code_str:
@@ -125,5 +229,20 @@ def gray_to_decimal(gray_code_list):
     return gray_decode(gray_code_binary)
 
 def get_codes(images):
+    """
+    Decode the Gray codes from images.
+
+    Parameters:
+    ----------
+    images : np.array
+        The images.
+    
+    Returns:
+    -------
+    h_codes : np.array
+        The horizontal Gray codes.
+    v_codes : np.array
+        The vertical Gray codes.
+    """
     L_d, L_g = get_direct_indirect(images)
     return get_is_lit(images, L_d, L_g)

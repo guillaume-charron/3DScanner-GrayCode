@@ -3,6 +3,21 @@ import numpy as np
 
 # Inspired from https://github.com/sjnarmstrong/gray-code-structured-light/blob/master/CaptureImages/GrayImages.py
 def get_gray_codes(width, height):
+    """
+    Generates Gray codes for a given resolution.
+
+    Parameters:
+    ----------
+    width : int
+        The width of the image.
+    height : int
+        The height of the image.
+    
+    Returns:
+    -------
+    codes : np.array
+        The Gray codes.
+    """
     # Get larger size
     max_size = max(width, height)
 
@@ -17,6 +32,23 @@ def get_gray_codes(width, height):
     return np.unpackbits(codes.view(dtype=np.uint8)).reshape((-1, 16))[:, 16-n_bits:]
 
 def get_image_sequence(gray_codes, width, height):
+    """
+    Generates a sequence of gray code images for a given resolution.
+
+    Parameters:
+    ----------
+    gray_codes : np.array
+        The Gray codes.
+    width : int
+        The width of the image.
+    height : int
+        The height of the image.
+    
+    Returns:
+    -------
+    images : np.array
+        The Gray code images.
+    """
     # Create black images
     images = np.zeros((4*len(gray_codes[0])+2,height, width), dtype=np.uint8)
 
@@ -49,6 +81,24 @@ def get_image_sequence(gray_codes, width, height):
     return images
 
 def display_gray_code(gray_codes, width, height, repeat_n, fps, write_video_seq=False):
+    """
+    Displays the Gray code pattern.
+    
+    Parameters:
+    ----------
+    gray_codes : np.array
+        The Gray codes.
+    width : int
+        The width of the image.
+    height : int
+        The height of the image.
+    repeat_n : int
+        The number of times to repeat the sequence.
+    fps : int
+        The number of frames per second.
+    write_video_seq : bool
+        Whether to write the sequence to a video file.
+    """
     images = get_image_sequence(gray_codes, width, height)
 
     if write_video_seq:
